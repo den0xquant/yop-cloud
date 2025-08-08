@@ -87,8 +87,13 @@ class Settings(BaseSettings):
 
     CHUNK_SIZE: int = 1024 * 1024  # 1MB
 
-    AWS_ACCESS_KEY_ID: str = ""
-    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_ENDPOINT_URL: str
+    AWS_REGION_NAME: str
+    AWS_SIGNATURE_VERSION: str = "s3v4"
+    AWS_SERVICE_NAME: str = "s3"
+    AWS_BUCKET_NAME: str = "yop-cloud-bucket"
 
 
 settings = Settings()  # type: ignore

@@ -22,7 +22,7 @@ x-app-common: &x-app-common
     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
     - SENTRY_DSN=${SENTRY_DSN}
   healthcheck:
-    test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/health-check" ]
+    test: [ "CMD", "curl", "-f", "http://localhost:8000/health-check" ]
     interval: 100s
     timeout: 5s
     retries: 5
@@ -60,6 +60,7 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    command: server /data --console-address ":9001"
 
   writer:
     <<: *x-app-common
@@ -81,6 +82,14 @@ services:
       - ./nginx:/etc/nginx/conf.d:ro
     depends_on:
       - writer
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
 
 volumes:
   db_data:
