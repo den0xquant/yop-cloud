@@ -1,19 +1,25 @@
-from typing import Literal
-from uuid import UUID
+from enum import StrEnum
+import uuid
+
+from sqlmodel import SQLModel
 
 
-class File:
-    id: int
+class FileType(StrEnum):
+    FILE = "file"
+    DIRECTORY = "directory"
+
+
+class FileCreate(SQLModel):
     name: str
-    user_id: UUID
+
+
+class FileBase(FileCreate):
     parent_id: int = -1
-    file_type: Literal["FILE", "DIRECTORY"]
-    is_ready: bool
+    file_type: FileType = FileType.FILE
+    is_ready: bool = False
 
 
-class ChunkPerFile:
-    id: int
-    user_id: UUID
-    file_id: int
+class ChunkPerFileBase(SQLModel):
+    file_id: uuid.UUID
     chunk_hash: str
     index: int
