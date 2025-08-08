@@ -1,19 +1,16 @@
 from typing import Literal
-from uuid import UUID
+
+from sqlmodel import SQLModel
 
 
-class File:
-    id: int
+class FileBase(SQLModel):
     name: str
-    user_id: UUID
     parent_id: int = -1
-    file_type: Literal["FILE", "DIRECTORY"]
-    is_ready: bool
+    file_type: Literal["FILE", "DIRECTORY"] = "FILE"
+    is_ready: bool = False
 
 
-class ChunkPerFile:
-    id: int
-    user_id: UUID
+class ChunkPerFileBase(SQLModel):
     file_id: int
     chunk_hash: str
     index: int
