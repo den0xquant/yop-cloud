@@ -13,4 +13,6 @@ class FileStreamer:
         return resp["Body"]
 
     async def upload_chunk(self, chunk: bytes, key: str) -> None:
-        await self.s3client.put_object(Bucket=settings.AWS_BUCKET_NAME, Key=key, Body=chunk)
+        await self.s3client.put_object(
+            Bucket=settings.AWS_BUCKET_NAME, Key=key, Body=chunk
+        )

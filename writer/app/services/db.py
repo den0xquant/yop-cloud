@@ -20,7 +20,9 @@ class FileRepository:
     def save_chunk(self, file_id: uuid.UUID, chunk_hash: str) -> None:
         idx = 0  # TODO: Calc index correctly
 
-        chunk_create = ChunkPerFileBase(file_id=file_id, chunk_hash=chunk_hash, index=idx)
+        chunk_create = ChunkPerFileBase(
+            file_id=file_id, chunk_hash=chunk_hash, index=idx
+        )
         chunk_obj = ChunkPerFile.model_validate(chunk_create)
 
         self.session.add(chunk_obj)

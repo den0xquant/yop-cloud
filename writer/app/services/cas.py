@@ -1,4 +1,5 @@
 """Content Addressable Storage"""
+
 import uuid
 import secrets
 from fastapi import UploadFile
@@ -8,6 +9,7 @@ from app.schemas.models import FileCreate
 from app.services.ports import Database, S3
 
 
+# TODO: WRITE DOCUMENTATION AND TESTS
 class FileStorageService:
     def __init__(self, db: Database, s3: S3):
         self.db = db
@@ -18,12 +20,14 @@ class FileStorageService:
 
     def get_random_string(self, n: int) -> str:
         return secrets.token_urlsafe(n)
-    
+
     def get_filename(self, file_id: uuid.UUID) -> str:
         return self.db.get_filename_by_id(file_id)
 
     async def upload_file(self, file: UploadFile) -> str:
-        filename = file.filename if file.filename is not None else self.get_random_string(20)
+        filename = (
+            file.filename if file.filename is not None else self.get_random_string(20)
+        )
         try:
             file_create = FileCreate(name=filename)
             file_obj = self.db.save_file(file_create=file_create)
@@ -39,10 +43,12 @@ class FileStorageService:
         return "OK"
 
     async def stream_file(self, file_id: uuid.UUID):
-        chunks = self.db.get_file_chunks(file_id)
+        chunks = self.db.get_file_chunks(file_id)  # TODO: Add order by index
 
         for rec in chunks:
-            body_stream = await self.s3.get_chunk_stream(key=rec.chunk_hash)
+            body_stream = await self.s3.get_chunk_stream(
+                key=rec.chunk_hash
+            )  # TODO:  use async with
             while True:
                 part = await body_stream.read(settings.CHUNK_SIZE)
                 if not part:
