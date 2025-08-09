@@ -86,6 +86,7 @@ class Settings(BaseSettings):
         return self
 
     CHUNK_SIZE: int = 1024 * 1024  # 1MB
+    READ_CHUNK: int = 256 * 1024
 
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str

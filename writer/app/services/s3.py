@@ -1,8 +1,6 @@
 import asyncio
-from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import Generator
-from aiobotocore.response import StreamingBody
+from typing import AsyncIterator
 from types_aiobotocore_s3.client import S3Client
 
 from app.core.config import settings
@@ -16,10 +14,10 @@ class FileStreamer:
         self.s3client = s3client
         self.bucket = settings.AWS_BUCKET_NAME
 
-    async def get_chunk_stream(self, key: str):
+    async def get_chunk_stream(self, *, key: str) -> AsyncIterator[bytes]:
         resp = await self.s3client.get_object(Bucket=self.bucket, Key=key)
-        log.info(f"type: {type(resp["Body"])} body: {resp["Body"]}")
-        return resp["Body"]
+        log.info(f"type of body: {type(resp['Body'])}")
+        return resp["Body"].iter_chunks(settings.READ_CHUNK)
 
     async def upload_chunk(self, chunk: bytes, key: str, attempts: int = 3) -> None:
         delay = 0.1

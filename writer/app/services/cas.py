@@ -21,7 +21,7 @@ class FileStorageService:
 
     Responsibilities:
         - Split uploaded files into fixed-size chunks.
-        - Calculate a stable hash for each chunk (currently Python's built-in hash, replace with sha256).
+        - Calculate a stable hash for each chunk.
         - Store chunk metadata in the database (mapping file_id -> chunk_hash -> index).
         - Upload chunks to an S3-compatible object storage.
         - Stream files back to the client by reading chunks sequentially from storage.
@@ -29,25 +29,6 @@ class FileStorageService:
     Dependencies:
         db (Database): Abstract interface for file/chunk metadata persistence.
         s3 (S3): Abstract interface for S3-compatible storage operations.
-
-    TODO:
-        [ ] Replace `hash()` with a deterministic hash (e.g., sha256) for chunk IDs.
-        [ ] Add `index` tracking when saving chunks (to preserve correct order on retrieval).
-        [ ] Implement ordering in `get_file_chunks` (ORDER BY index ASC).
-        [ ] Use `async with` for S3 `get_chunk_stream` to ensure resources are closed.
-        [ ] Add error handling for missing chunks / S3 errors with retries.
-        [ ] Wrap DB operations in transactions for consistency between metadata and S3.
-        [ ] Improve `upload_file` to handle large files, failed uploads, and cleanup on error.
-        [ ] Store additional file metadata (size, content type, upload date, status).
-        [ ] Add logging for uploads/downloads (file_id, chunk count, latency).
-        [ ] Write unit tests:
-            - Test `get_chunk_hash` stability.
-            - Test chunk upload & retrieval round-trip.
-            - Test handling of missing chunk.
-            - Test empty file upload.
-        [ ] Write integration tests with MinIO in Docker.
-        [ ] Add docstrings for each public method (purpose, args, returns, raises).
-        [ ] Document class usage in README with example FastAPI endpoints.
     """
     def __init__(self, db: Database, s3: S3):
         self.db = db
@@ -103,14 +84,14 @@ class FileStorageService:
 
         for chunk in chunks:
             chunk_key = chunk.chunk_hash
+            body = await self.s3.get_chunk_stream(key=chunk_key)
 
             try:
-                async with self.s3.get_chunk_stream(key=chunk_key) as body_stream:
-                    while True:
-                        part = await body_stream.read(settings.CHUNK_SIZE)
-                        if not part:
-                            break
-                        yield part
-            except Exception as e:
+                async for chunk in body:
+                    if not chunk:
+                        break
+                    yield chunk
+
+            except Exception:
                 log.exception(f"Failed to stream chunk: {chunk_key}")
                 raise ValueError("Something went wrong")

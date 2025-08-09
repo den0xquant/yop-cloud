@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 import uuid
-from typing import Protocol, Sequence
-from aiobotocore.response import StreamingBody
+from typing import AsyncIterator, Protocol, Sequence
 
 from app.schemas.models import FileCreate
 from app.schemas.orm import File, ChunkPerFile
@@ -31,8 +30,7 @@ class Database(Protocol):
 
 
 class S3(Protocol):
-    @asynccontextmanager  # type: ignore
-    async def get_chunk_stream(self, key: str):
+    async def get_chunk_stream(self, *, key: str) -> AsyncIterator[bytes]:  # type: ignore
         pass
 
     async def upload_chunk(self, chunk: bytes, key: str) -> None:

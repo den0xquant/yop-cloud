@@ -1,4 +1,4 @@
-from botocore.client import Config
+from botocore.config import Config
 from aiobotocore.session import get_session
 
 from app.core.config import settings
