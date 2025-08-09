@@ -6,7 +6,9 @@ from app.schemas.models import FileBase, ChunkPerFileBase
 
 class File(FileBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    chunks: list["ChunkPerFile"] = Relationship(back_populates="file", cascade_delete=False)
+    chunks: list["ChunkPerFile"] = Relationship(
+        back_populates="file", cascade_delete=False
+    )
 
 
 class ChunkPerFile(ChunkPerFileBase, table=True):

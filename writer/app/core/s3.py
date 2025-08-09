@@ -1,4 +1,4 @@
-from botocore.client import Config
+from botocore.config import Config
 from aiobotocore.session import get_session
 
 from app.core.config import settings
@@ -12,6 +12,6 @@ async def get_s3_client():
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         region_name=settings.AWS_REGION_NAME,
-        config=Config(signature_version=settings.AWS_SIGNATURE_VERSION)
+        config=Config(signature_version=settings.AWS_SIGNATURE_VERSION),
     ) as client:
         yield client
