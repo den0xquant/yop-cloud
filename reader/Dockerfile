@@ -17,11 +17,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 ENV PYTHONPATH=/code
 
-COPY ./pyproject.toml ./uv.lock ./alembic.ini /code/
+COPY ./pyproject.toml ./uv.lock /code/
+
+# COPY ./alembic.ini /code/
 
 COPY ./app /code/app
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

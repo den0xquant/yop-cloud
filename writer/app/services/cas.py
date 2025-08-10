@@ -2,7 +2,6 @@
 
 import logging
 import hashlib
-from typing import AsyncGenerator
 import uuid
 import secrets
 from fastapi import UploadFile
@@ -75,23 +74,3 @@ class FileStorageService:
             finally:
                 pass
             raise
-
-    async def stream_file(self, file_id: uuid.UUID) -> AsyncGenerator[bytes, None]:
-        chunks = self.db.get_file_chunks(file_id)
-
-        if not chunks:
-            raise FileNotFoundError(f"No chunks for file {file_id}")
-
-        for chunk in chunks:
-            chunk_key = chunk.chunk_hash
-            body = await self.s3.get_chunk_stream(key=chunk_key)
-
-            try:
-                async for chunk in body:
-                    if not chunk:
-                        break
-                    yield chunk
-
-            except Exception:
-                log.exception(f"Failed to stream chunk: {chunk_key}")
-                raise ValueError("Something went wrong")
