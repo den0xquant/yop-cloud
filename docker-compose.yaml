@@ -1,5 +1,4 @@
 x-app-common: &x-app-common
-  image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
   restart: always
   depends_on:
     db:
@@ -26,8 +25,6 @@ x-app-common: &x-app-common
     interval: 100s
     timeout: 5s
     retries: 5
-  ports:
-    - "${BACKEND_PORT:-8000}:8000"
 
 services:
   db:
@@ -64,15 +61,21 @@ services:
 
   writer:
     <<: *x-app-common
+    image: 'writer:${TAG-latest}'
     build:
       context: writer
       dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
 
-  # reader:
-  #   <<: *x-app-common
-  #   build:
-  #     context: reader
-  #     dockerfile: Dockerfile
+  reader:
+    <<: *x-app-common
+    image: 'reader:${TAG-latest}'
+    build:
+      context: reader
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
 
   nginx:
     image: nginx:alpine
