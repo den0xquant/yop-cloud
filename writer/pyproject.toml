@@ -20,4 +20,6 @@ dependencies = [
 dev = [
     "aiofiles>=24.1.0",
     "hashfs>=0.7.2",
+    "httpx>=0.28.1",
+    "pytest>=8.4.1",
 ]
