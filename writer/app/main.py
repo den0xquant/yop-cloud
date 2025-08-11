@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 
 from app.core.config import settings
-from app.core.db import init_db
 from app.api.main import api_router
 
 
@@ -35,7 +34,6 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
     app.include_router(api_router, prefix=settings.API_V1_STR)
-    init_db()
     return app
 
 
