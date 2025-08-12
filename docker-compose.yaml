@@ -1,7 +1,23 @@
+networks:
+  internal:
+  edge:
+
+
+volumes:
+  db_data:
+  logs:
+  nginx:
+  s3data:
+  alembic:
+
+
 x-app-common: &x-app-common
   restart: always
   depends_on:
     db:
+      condition: service_healthy
+      restart: true
+    s3:
       condition: service_healthy
       restart: true
   volumes:
@@ -44,6 +60,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+    networks: [ internal ]
 
   s3:
     image: quay.io/minio/minio
@@ -54,10 +71,13 @@ services:
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER?Variable not set}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD?Variable not set}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/ready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [ internal ]
 
   writer:
     <<: *x-app-common
@@ -65,8 +85,7 @@ services:
     build:
       context: writer
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    networks: [ internal ]
 
   reader:
     <<: *x-app-common
@@ -74,29 +93,24 @@ services:
     build:
       context: reader
       dockerfile: Dockerfile
-    ports:
-      - "8001:8001"
+    networks: [ internal ]
 
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
     volumes:
-      - ./nginx:/etc/nginx/conf.d:ro
+      - ./nginx/app.conf:/etc/nginx/conf.d/app.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/empty.conf:/etc/nginx/conf.d/default.conf:ro
+
     depends_on:
       - writer
+    networks: [ internal, edge ]
 
   adminer:
     image: adminer
     restart: always
     depends_on:
       - db
-    ports:
-      - "${ADMINER_PORT:-8080}:8080"
-
-volumes:
-  db_data:
-  logs:
-  nginx:
-  s3data:
-  alembic:
+    networks: [ internal, edge ]

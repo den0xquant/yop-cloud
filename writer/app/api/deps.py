@@ -1,7 +1,6 @@
 from typing import Annotated
-from fastapi import Depends
+from fastapi import Depends, Request
 from sqlmodel import Session
-from types_aiobotocore_s3.client import S3Client
 
 from app.services.ports import Database, S3
 from app.services.cas import FileStorageService
@@ -17,8 +16,9 @@ def get_repository(session: SessionDependency) -> Database:
     return FileRepository(session=session)
 
 
-def get_streamer() -> S3:
-    return FileStreamer()
+def get_streamer(request: Request) -> S3:
+    client_manager = request.app.state.s3_manager
+    return FileStreamer(manager=client_manager)
 
 
 RepositoryDependency = Annotated[Database, Depends(get_repository)]

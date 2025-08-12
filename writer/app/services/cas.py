@@ -2,12 +2,13 @@
 
 import logging
 import hashlib
+from typing import AsyncGenerator
 import uuid
 import secrets
 from fastapi import UploadFile
 
 from app.core.config import settings
-from app.schemas.models import FileCreate
+from app.schemas.models import FileCreate, FileBase
 from app.services.ports import Database, S3
 
 
@@ -44,6 +45,10 @@ class FileStorageService:
     def get_filename(self, file_id: uuid.UUID) -> str:
         return self.db.get_filename_by_id(file_id)
 
+    def get_file_object(self, file_id: uuid.UUID) -> FileBase:
+        file_obj = self.db.get_file_by_id(file_id)
+        return FileBase.model_validate(file_obj)
+
     async def upload_file(self, file: UploadFile) -> str:
         filename = file.filename or self.get_random_string(20)
         content_type = file.content_type or "application/octet-stream"
@@ -74,3 +79,21 @@ class FileStorageService:
             finally:
                 pass
             raise
+
+    async def stream_file(self, file_id: uuid.UUID) -> AsyncGenerator[bytes, None]:
+        chunks = self.db.get_file_chunks(file_id)
+
+        if not chunks:
+            raise FileNotFoundError(f"No chunks for file {file_id}")
+
+        for chunk_meta in chunks:
+            chunk_key = chunk_meta.chunk_hash
+
+            try:
+                async for chunk in self.s3.get_chunk_stream(key=chunk_key):
+                    yield chunk
+
+            except Exception as e:
+                log.exception(f"Failed to stream chunk: {chunk_key}")
+                log.exception(f"Error {e}")
+                raise ValueError("Something went wrong")

@@ -1,33 +1,25 @@
 import uuid
-from typing import Protocol, Sequence
+from typing import AsyncGenerator, Protocol, Sequence
 
 from app.schemas.models import FileCreate
 from app.schemas.orm import File, ChunkPerFile
 
 
 class Database(Protocol):
-    def save_file(self, file_create: FileCreate) -> File:  # type: ignore
-        pass
-
-    def save_chunk(self, file_id: uuid.UUID, chunk_hash: str, index: int) -> None:
-        pass
-
-    def get_file_by_id(self, file_id: uuid.UUID) -> File | None:
-        pass
-
-    def get_filename_by_id(self, file_id: uuid.UUID) -> str:  # type: ignore
-        pass
-
-    def get_file_chunks(self, file_id: uuid.UUID) -> Sequence[ChunkPerFile]:  # type: ignore
-        pass
-
-    def set_file_failed(self, file_id: uuid.UUID) -> None:
-        pass
-
-    def set_file_completed(self, file_id: uuid.UUID) -> None:
-        pass
+    def save_file(self, file_create: FileCreate) -> File: ...
+    def save_chunk(self, file_id: uuid.UUID, chunk_hash: str, index: int) -> None: ...
+    def get_file_by_id(self, file_id: uuid.UUID) -> File | None: ...
+    def get_filename_by_id(self, file_id: uuid.UUID) -> str: ...
+    def get_file_chunks(self, file_id: uuid.UUID) -> Sequence[ChunkPerFile]: ...
+    def set_file_failed(self, file_id: uuid.UUID) -> None: ...
+    def set_file_completed(self, file_id: uuid.UUID) -> None: ...
 
 
 class S3(Protocol):
-    async def upload_chunk(self, chunk: bytes, key: str) -> None:
-        pass
+    async def upload_chunk(self, chunk: bytes, key: str) -> None: ...
+    def get_chunk_stream(self, *, key: str) -> AsyncGenerator[bytes, None]: ...
+
+
+class S3Like(Protocol):
+    async def put_object(self, *, Bucket: str, Key: str, Body: bytes) -> dict: ...
+    async def get_object(self, *, Bucket: str, Key: str) -> dict: ...

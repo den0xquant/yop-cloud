@@ -335,3 +335,4 @@ logs/
 data/
 db_data/
 s3data/
+.vscode/
