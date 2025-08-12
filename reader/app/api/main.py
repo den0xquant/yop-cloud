@@ -1,14 +1,19 @@
 import uuid
-from fastapi import APIRouter, Request, HTTPException, status
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    status,
+    Request,
+)
 from fastapi.responses import StreamingResponse
 
 from app.api.deps import CASDependency
 
 
-api_router = APIRouter(prefix="/download", tags=["reader"])
+api_router = APIRouter(tags=["reader"])
 
 
-@api_router.get("/{file_id}", name="download_file")
+@api_router.get("/download/{file_id}", name="download_file")
 async def download(*, request: Request, file_id: uuid.UUID, fs: CASDependency):
     media_type = "application/octet-stream"
     file = fs.get_file_object(file_id)

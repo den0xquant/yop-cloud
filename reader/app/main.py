@@ -1,11 +1,12 @@
 import sentry_sdk
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 
 from app.core.config import settings
-from app.core.db import init_db
 from app.api.main import api_router
+from app.services.s3 import S3ClientManager
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -20,11 +21,23 @@ if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
     sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)
 
 
-def create_app() -> FastAPI:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    s3_manager = S3ClientManager()
+    await s3_manager.start()
+    app.state.s3_manager = s3_manager
+    try:
+        yield
+    finally:
+        await s3_manager.close()
+
+
+def create_app(lifespan) -> FastAPI:
     app = FastAPI(
         title=settings.PROJECT_NAME,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
         generate_unique_id_function=custom_generate_unique_id,
+        lifespan=lifespan,
+        root_path=settings.ROOT_PATH,
     )
     if settings.all_cors_origins:
         app.add_middleware(
@@ -35,11 +48,10 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
     app.include_router(api_router, prefix=settings.API_V1_STR)
-    init_db()
     return app
 
 
-app = create_app()
+app = create_app(lifespan=lifespan)
 
 
 @app.get("/health-check", tags=["infra"])
